@@ -9,8 +9,8 @@ class LogStash::Outputs::Neo4j < LogStash::Outputs::Base
 
   config :host, :validate => :string, :required => true, :default => "localhost"
   config :port, :validate => :number, :required => true, :default => "7474"
-  config :username, :validate => :string, :required => true
-  config :password, :validate => :string, :required => true
+  config :username, :validate => :string, :required => false, :default => nil
+  config :password, :validate => :string, :required => false, :default => nil
   config :debug, :validate => :boolean, :default => false
 
   RECONNECT_BACKOFF_SLEEP = 0.5
@@ -67,7 +67,11 @@ class LogStash::Outputs::Neo4j < LogStash::Outputs::Base
     @logger.info("Connecting to neo4j server.", :address => @host, :port => @port)
 
     begin
-      @client = Neography::Rest.new("http://#{@username}:#{@password}@#{@host}:#{@port}")
+      if @username.nil?
+        @client = Neography::Rest.new("http://#{@host}:#{@port}")
+      else
+        @client = Neography::Rest.new("http://#{@username}:#{@password}@#{@host}:#{@port}")
+      end
     rescue Exception => e
       @logger.error("Host unavailable, sleeping", :host => @host, :e => e, :backtrace => e.backtrace)
       sleep(10)
